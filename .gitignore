@@ -1,0 +1,26 @@
+# STM32CubeIDE build artifacts
+Telemetry/Debug/
+Telemetry/Release/
+Telemetry/.settings/
+Telemetry/*.launch
+
+# Android build outputs & local environment
+TelemetryAndroid/.gradle/
+TelemetryAndroid/build/
+TelemetryAndroid/app/build/
+TelemetryAndroid/local.properties
+TelemetryAndroid/.externalNativeBuild/
+TelemetryAndroid/*.apk
+TelemetryAndroid/*.aab
+
+# Archives
+*.zip
+
+# OS and environment
+.DS_Store
+Thumbs.db
+*.log
+.env
+*.env
+__pycache__/
+*.pyc

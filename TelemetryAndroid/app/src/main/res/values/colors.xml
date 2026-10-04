@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Ana Arka Plan -->
+    <color name="bg_primary">#FF1A1A2E</color>
+    <color name="bg_card">#FF16213E</color>
+    <color name="bg_card_elevated">#FF1E2A4A</color>
+
+    <!-- Accent Renkler (STM32 dashboard ile uyumlu) -->
+    <color name="accent_red">#FFE94560</color>
+    <color name="accent_cyan">#FF00D2FF</color>
+    <color name="accent_green">#FF00FF88</color>
+    <color name="accent_yellow">#FFFFD700</color>
+    <color name="accent_orange">#FFFF6B35</color>
+    <color name="accent_amber">#FFFFB300</color>
+
+    <!-- Metin -->
+    <color name="text_primary">#FFFFFFFF</color>
+    <color name="text_secondary">#FFAAAAAA</color>
+    <color name="text_muted">#FF666666</color>
+
+    <!-- Durum -->
+    <color name="status_ok">#FF00FF88</color>
+    <color name="status_warning">#FFFFB300</color>
+    <color name="status_fault">#FFFF0000</color>
+    <color name="status_disconnected">#FFFF4444</color>
+    <color name="status_connected">#FF00FF88</color>
+
+    <!-- Progress Bar -->
+    <color name="bar_bg">#FF333355</color>
+    <color name="rpm_bar">#FFE94560</color>
+    <color name="throttle_bar">#FF00D2FF</color>
+
+    <!-- Buton -->
+    <color name="btn_connect">#FF00D2FF</color>
+    <color name="btn_connect_pressed">#FF0099CC</color>
+
+    <!-- System -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>

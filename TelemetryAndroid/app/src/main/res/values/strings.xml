@@ -1,0 +1,60 @@
+<resources>
+    <string name="app_name">KOU Racing Telemetry</string>
+
+    <string name="header_title">KOU RACING TELEMETRY</string>
+    <string name="status_connected">● Connected</string>
+    <string name="status_disconnected">● Disconnected</string>
+    <string name="status_connecting">● Connecting…</string>
+    <string name="status_authenticating">● Authenticating…</string>
+
+    <string name="card_rpm">RPM</string>
+    <string name="card_speed">SPEED</string>
+    <string name="card_sensors">SENSORS</string>
+    <string name="card_status">STATUS</string>
+    <string name="card_connection">BAĞLANTI AYARLARI</string>
+    <string name="card_debug">DEBUG LOG</string>
+
+    <string name="label_motor_temp">Motor Temp</string>
+    <string name="label_battery_volt">Battery Volt</string>
+    <string name="label_throttle">Throttle</string>
+
+    <string name="label_state">State</string>
+    <string name="label_inverter">Inverter</string>
+    <string name="label_battery_status">Battery</string>
+    <string name="label_fault">Fault</string>
+    <string name="fault_ok">SYSTEM OK</string>
+    <string name="fault_active">FAULT ACTIVE</string>
+
+    <string name="hint_ip">Raspberry Pi IP</string>
+    <string name="hint_port">Port</string>
+    <string name="btn_connect">BAĞLAN</string>
+    <string name="btn_disconnect">KES</string>
+
+    <string name="label_local_mode">Yerel Ağ</string>
+    <string name="label_tunnel_mode">Cloudflare Tunnel</string>
+    <string name="hint_tunnel_url">Tunnel URL (ör: https://telemetry.domain.com)</string>
+
+    <string name="auth_dialog_title">Takım Doğrulama</string>
+    <string name="auth_dialog_message">Takım şifresini girin:</string>
+    <string name="auth_dialog_submit">Giriş</string>
+    <string name="auth_dialog_cancel">İptal</string>
+    <string name="log_auth_success">Takım doğrulaması başarılı</string>
+    <string name="log_auth_failed">Doğrulama reddedildi: %1$s</string>
+    <string name="log_auth_waiting">Şifre bekleniyor…</string>
+
+    <string name="unit_kmh">km/h</string>
+    <string name="unit_celsius">°C</string>
+    <string name="unit_volt">V</string>
+    <string name="unit_percent">%</string>
+
+    <string name="format_temp">%1$d°C</string>
+    <string name="format_volt">%1$.1fV</string>
+    <string name="format_throttle">%1$d%%</string>
+    <string name="format_connecting">Connecting: %1$s:%2$d …</string>
+    <string name="format_connecting_tunnel">Connecting: %1$s …</string>
+    <string name="format_error">[ERROR] %1$s</string>
+    <string name="log_connected">Connected</string>
+    <string name="log_empty_ip">[ERROR] IP address cannot be empty</string>
+    <string name="log_empty_tunnel_url">[ERROR] Tunnel URL cannot be empty</string>
+    <string name="log_waiting">Waiting for connection…</string>
+</resources>
