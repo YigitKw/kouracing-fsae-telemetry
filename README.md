@@ -1,5 +1,7 @@
 # KOU Racing - FSAE Telemetry System
 
+[Türkçe Dokümantasyon](README.tr.md)
+
 Real-time telemetry and data acquisition system designed for the Formula Student Electric racing vehicle. The system integrates an on-vehicle digital instrument cluster (STM32), an Ethernet-based gateway (Raspberry Pi), and a trackside monitoring application (Android).
 
 ---
