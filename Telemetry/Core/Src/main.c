@@ -41,14 +41,14 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-// --- FAULT MONITORING EÃƒâ€¦Ã‚ÂÃƒâ€Ã‚Â°K DEÃƒâ€Ã‚ÂERLERÃƒâ€Ã‚Â° ---
-#define MOTOR_TEMP_WARNING 75    // Ãƒâ€šÃ‚Â°C - uyarÃƒâ€Ã‚Â±
-#define MOTOR_TEMP_CRITICAL 85   // Ãƒâ€šÃ‚Â°C - kritik
-#define BATTERY_VOLT_LOW 340.0f  // V - dÃƒÆ’Ã‚Â¼Ãƒâ€¦Ã…Â¸ÃƒÆ’Ã‚Â¼k voltaj
-#define BATTERY_VOLT_HIGH 380.0f // V - yÃƒÆ’Ã‚Â¼ksek voltaj
-#define RPM_REDLINE 9500         // RPM - kÃƒâ€Ã‚Â±rmÃƒâ€Ã‚Â±zÃƒâ€Ã‚Â± bÃƒÆ’Ã‚Â¶lge
+// --- FAULT MONITORING THRESHOLDS ---
+#define MOTOR_TEMP_WARNING 75    // deg C - warning
+#define MOTOR_TEMP_CRITICAL 85   // deg C - critical
+#define BATTERY_VOLT_LOW 340.0f  // V - low voltage
+#define BATTERY_VOLT_HIGH 380.0f // V - high voltage
+#define RPM_REDLINE 9500         // RPM - redline
 
-// --- RASPBERRY PI AÃƒâ€Ã‚Â AYARLARI ---
+// --- RASPBERRY PI NETWORK CONFIGURATION ---
 #define RPI_IP_1 192
 #define RPI_IP_2 168
 #define RPI_IP_3 1
@@ -135,47 +135,47 @@ static uint32_t lap_time_ms = 0;
 volatile uint8_t current_screen = 0; // 0=dashboard, 1=screen2
 static uint8_t btn_prev = 1;         // debounce: previous button state
 
-// LVGL Objeleri
+// LVGL Objects
 #define RPM_LED_COUNT 12
 #define RPM_MAX_VALUE 7500
 #define TC_LED_COUNT  9
 
-// ========== AYIRICI BEYAZ DIKDORTGEN AYARLARI ==========
-// Kalinlik (piksel)
+// ========== WHITE RECTANGULAR DIVIDER SETTINGS ==========
+// Thickness (pixels)
 #define DIV_THICKNESS     2
-// Renk (beyaz)
+// Color (white)
 #define DIV_COLOR         0xFFFFFF
-// Opaklık (0-255, 255=tam opak)
+// Opacity (0-255, 255=fully opaque)
 #define DIV_OPACITY       LV_OPA_COVER
 
-// --- Yatay cizgiler (soldan saga) ---
-// Ust bilgi satiri altindaki yatay cizgi
+// --- Horizontal lines (left to right) ---
+// Divider below top status row
 #define DIV_H1_X          0
 #define DIV_H1_Y          56
 #define DIV_H1_W          480
 
-// Alt TC LED satiri ustundeki yatay cizgi
+// Divider above bottom TC LED row
 #define DIV_H2_X          0
 #define DIV_H2_Y          236
 #define DIV_H2_W          480
 
-// --- Dikey cizgiler (yukaridan asagi) ---
-// Sol sicaklik kolonu sag kenari
+// --- Vertical lines (top to bottom) ---
+// Left temperature column border
 #define DIV_V1_X          133
 #define DIV_V1_Y          56
 #define DIV_V1_H          180
 
-// Sol fren bari sag kenari (fren+lastik | hiz merkez)
+// Left brake bar border (brake+tire | center speed)
 #define DIV_V2_X          163
 #define DIV_V2_Y          56
 #define DIV_V2_H          180
 
-// Sag gaz bari sol kenari (hiz merkez | gaz+lastik)
+// Right throttle bar border (center speed | throttle+tire)
 #define DIV_V3_X          315
 #define DIV_V3_Y          56
 #define DIV_V3_H          180
 
-// Sag MODE/FAULT kolonu sol kenari
+// Right MODE/FAULT column border
 #define DIV_V4_X          345
 #define DIV_V4_Y          56
 #define DIV_V4_H          180
@@ -248,7 +248,7 @@ void UDP_Server_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 void Update_Telemetry(void) {
-  // Ana sensÃƒÆ’Ã‚Â¶rler
+  // Core sensors
   myCar.rpm = 1500 + (rand() % 6000);        // 1500-7500
   myCar.speed = 60 + (rand() % 80);           // 60-140 km/h
   myCar.motor_temp = 55 + (rand() % 40);      // MTR 55-95
@@ -256,21 +256,21 @@ void Update_Telemetry(void) {
   myCar.throttle = (rand() % 101) / 100.0f;   // 0-100%
   myCar.brake = (rand() % 101) / 100.0f;      // 0-100%
 
-  // SÃƒâ€Ã‚Â±caklÃƒâ€Ã‚Â±klar
+  // Temperatures
   myCar.bat_temp = 35 + (rand() % 25);         // BAT 35-60
   myCar.inv_temp = 40 + (rand() % 30);         // INV 40-70
   myCar.oil_temp = 70 + (rand() % 35);         // OIL 70-105
   myCar.wtr_temp = 55 + (rand() % 30);         // WTR 55-85
-  myCar.tire_temp_left  = 45 + (rand() % 45);  // Arka sol lastik 45-90
-  myCar.tire_temp_right = 45 + (rand() % 45);  // Arka sag lastik 45-90
+  myCar.tire_temp_left  = 45 + (rand() % 45);  // Rear left tire 45-90
+  myCar.tire_temp_right = 45 + (rand() % 45);  // Rear right tire 45-90
 
-  // GÃƒÆ’Ã‚Â¼ÃƒÆ’Ã‚Â§ & Batarya
+  // Power & Battery
   myCar.power_watts = 50 + (rand() % 250);     // 50-300W
   myCar.bat_percent = 30 + (rand() % 60);      // 30-90%
   myCar.regen_percent = rand() % 100;           // REG 0-100%
   myCar.tcs_percent = rand() % 60;              // TCS 0-60%
 
-  // Mode: her ~5 saniyede deÃƒâ€Ã…Â¸iÃƒâ€¦Ã…Â¸ (10Hz'de 50 tick)
+  // Mode: changes every ~5 seconds (50 ticks at 10Hz)
   {
     static uint8_t mode_cnt = 0;
     static uint8_t mode_idx = 0;
@@ -279,7 +279,7 @@ void Update_Telemetry(void) {
     myCar.mode = (char *)modes[mode_idx];
   }
 
-  // Ready durumu: fault yoksa READY
+  // Ready status: READY if no active fault
   myCar.fault = 0;
   myCar.vehicle_state = "Drive";
   myCar.inverter_status = "Active";
@@ -321,12 +321,12 @@ void Update_Telemetry(void) {
   if (lap_time_ms >= 600000) lap_time_ms = 0;
 }
 
-// --- UDP GÃƒÆ’Ã¢â‚¬â€œNDERÃƒâ€Ã‚Â°M (Persistent PCB ile optimize) ---
+// --- UDP TRANSMISSION (optimized with persistent PCB) ---
 static struct udp_pcb *udp_send_pcb = NULL;
 static ip_addr_t rpi_addr;
 
 void Send_Telemetry_UDP(char *message) {
-  // PCB'yi bir kez oluÃƒâ€¦Ã…Â¸tur, tekrar kullan
+  // Allocate PCB once and reuse
   if (udp_send_pcb == NULL) {
     udp_send_pcb = udp_new();
     IP4_ADDR(&rpi_addr, RPI_IP_1, RPI_IP_2, RPI_IP_3, RPI_IP_4);
@@ -342,10 +342,10 @@ void Send_Telemetry_UDP(char *message) {
   }
 }
 
-// --- UDP ALIM (Raspberry Pi'den veri okuma) ---
+// --- UDP RECEPTION (reading incoming Raspberry Pi data) ---
 static struct udp_pcb *udp_server_pcb;
 
-// Basit JSON parse:
+// Basic JSON parse:
 // {"rpm":8500,"speed":95,"temp":65,"volt":359.2,"throttle":0.75,"state":"Drive","fault":0}
 static int parse_int_field(const char *json, const char *key) {
   char search[32];
@@ -389,14 +389,14 @@ static char vehicle_state_buf[16] = "Ready"; // State string buffer
 void udp_receive_callback(void *arg, struct udp_pcb *pcb, struct pbuf *p,
                           const ip_addr_t *addr, u16_t port) {
   if (p != NULL) {
-    // Gelen veriyi null-terminated string'e ÃƒÆ’Ã‚Â§evir
+    // Convert incoming buffer to null-terminated string
     char buf[256];
     uint16_t len =
         (p->tot_len < sizeof(buf) - 1) ? p->tot_len : sizeof(buf) - 1;
     pbuf_copy_partial(p, buf, len, 0);
     buf[len] = '\0';
 
-    // JSON parse et ve TelemetryData'ya yaz
+    // Parse JSON and populate TelemetryData
     myCar.rpm = (uint16_t)parse_int_field(buf, "rpm");
     myCar.speed = (uint8_t)parse_int_field(buf, "speed");
     myCar.motor_temp = (int8_t)parse_int_field(buf, "temp");
@@ -418,7 +418,7 @@ void UDP_Server_Init(void) {
   udp_server_pcb = udp_new();
   if (udp_server_pcb != NULL) {
     err_t err =
-        udp_bind(udp_server_pcb, IP_ADDR_ANY, 5000); // Port 5000'den dinle
+        udp_bind(udp_server_pcb, IP_ADDR_ANY, 5000); // Bind to port 5000
     if (err == ERR_OK) {
       udp_recv(udp_server_pcb, udp_receive_callback, NULL);
     }
@@ -437,8 +437,8 @@ int main(void) {
   /* USER CODE END 1 */
 
   /* MPU Configuration--------------------------------------------------------*/
-  // MPU_Config();  // DEVRE DIÃƒâ€¦Ã‚ÂI: FMC register alanÃƒâ€Ã‚Â±nÃƒâ€Ã‚Â± (0xA0000000) engelliyor
-  // ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ HardFault
+  // MPU_Config();  // DISABLED: Blocks FMC register region (0xA0000000) -> HardFault
+  // (Blocked FMC caused bus fault / HardFault on SDRAM access)
 
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -1562,7 +1562,7 @@ static void MX_USART6_UART_Init(void) {
 static void MX_FMC_Init(void) {
 
   /* USER CODE BEGIN FMC_Init 0 */
-  __HAL_RCC_FMC_CLK_ENABLE(); // <-- SADECE BURAYA YAZIYORUZ
+  __HAL_RCC_FMC_CLK_ENABLE(); // Explicit FMC clock enable
   /* USER CODE END FMC_Init 0 */
 
   FMC_SDRAM_TimingTypeDef SdramTiming = {0};
@@ -1807,7 +1807,7 @@ static void MX_GPIO_Init(void) {
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
-  // B1 Mavi buton (PI11) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â ekran geÃƒÆ’Ã‚Â§iÃƒâ€¦Ã…Â¸i
+  // B1 User blue button (PI11) - screen toggle
   GPIO_InitStruct.Pin = GPIO_PIN_11;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -1845,7 +1845,7 @@ void Show_Splash_Screen(void) {
 }
 
 // ================================================================
-// SCREEN 1 - ANA DASHBOARD
+// SCREEN 1 - MAIN DASHBOARD
 // ================================================================
 void Create_KOURacing_Dashboard(void) {
   lv_obj_t *scr = lv_screen_active();
@@ -1857,7 +1857,7 @@ void Create_KOURacing_Dashboard(void) {
   lv_obj_set_size(scr1_cont, 480, 272);
   lv_obj_set_pos(scr1_cont, 0, 0);
 
-  // ========== RPM LED'ler (ust satir) ==========
+  // ========== RPM LEDs (top row) ==========
   {
     int led_w = 28, led_h = 18, led_gap = 6;
     int total_w = RPM_LED_COUNT * led_w + (RPM_LED_COUNT - 1) * led_gap;
@@ -1878,7 +1878,7 @@ void Create_KOURacing_Dashboard(void) {
     }
   }
 
-  // ========== Bilgi satiri: REG | RPM | TCS ==========
+  // ========== Status row: REG | RPM | TCS ==========
   regen_label = lv_label_create(scr1_cont);
   lv_label_set_text(regen_label, "REG %0");
   lv_obj_set_style_text_color(regen_label, lv_color_hex(0x00FF88), 0);
@@ -1897,7 +1897,7 @@ void Create_KOURacing_Dashboard(void) {
   lv_obj_set_style_text_font(tcs_label, &lv_font_montserrat_28, 0);
   lv_obj_set_pos(tcs_label, 339, 26);
 
-  // ========== Sol kolon: Sicakliklar ==========
+  // ========== Left column: Temperatures ==========
   bat_temp_lbl = lv_label_create(scr1_cont);
   lv_label_set_text(bat_temp_lbl, "BAT  0\xc2\xb0" "C");
   lv_obj_set_style_text_color(bat_temp_lbl, lv_color_hex(0xffd700), 0);
@@ -1928,7 +1928,7 @@ void Create_KOURacing_Dashboard(void) {
   lv_obj_set_style_text_font(wtr_temp_lbl, &lv_font_montserrat_24, 0);
   lv_obj_set_pos(wtr_temp_lbl, 5, 188);
 
-  // ========== Sol lastik sicakligi ==========
+  // ========== Left tire temperature ==========
   tire_left_lbl = lv_label_create(scr1_cont);
   lv_label_set_text(tire_left_lbl, "0\n\xc2\xb0" "C");
   lv_obj_set_style_text_color(tire_left_lbl, lv_color_white(), 0);
@@ -1936,7 +1936,7 @@ void Create_KOURacing_Dashboard(void) {
   lv_obj_set_style_text_font(tire_left_lbl, &lv_font_montserrat_24, 0);
   lv_obj_set_pos(tire_left_lbl, 168, 60);
 
-  // ========== Fren bari (kirmizi) ==========
+  // ========== Brake bar (red) ==========
   brake_bar = lv_bar_create(scr1_cont);
   lv_obj_set_size(brake_bar, 18, 120);
   lv_obj_set_pos(brake_bar, 140, 100);
@@ -1950,7 +1950,7 @@ void Create_KOURacing_Dashboard(void) {
   lv_obj_set_style_text_font(brake_pct_lbl, &lv_font_montserrat_16, 0);
   lv_obj_set_pos(brake_pct_lbl, 129, 220);
 
-  // ========== Hiz (merkez, buyuk font) ==========
+  // ========== Speed (center, large font) ==========
   speed_label = lv_label_create(scr1_cont);
   lv_label_set_text(speed_label, "0");
   lv_obj_set_style_text_font(speed_label, &lv_font_montserrat_48, 0);
@@ -1984,7 +1984,7 @@ void Create_KOURacing_Dashboard(void) {
   lv_obj_set_style_text_font(power_lbl, &lv_font_montserrat_28, 0);
   lv_obj_align(power_lbl, LV_ALIGN_CENTER, 0, 70);
 
-  // ========== Sag lastik sicakligi ==========
+  // ========== Right tire temperature ==========
   tire_right_lbl = lv_label_create(scr1_cont);
   lv_label_set_text(tire_right_lbl, "0\n\xc2\xb0" "C");
   lv_obj_set_style_text_color(tire_right_lbl, lv_color_white(), 0);
@@ -1992,7 +1992,7 @@ void Create_KOURacing_Dashboard(void) {
   lv_obj_set_style_text_font(tire_right_lbl, &lv_font_montserrat_24, 0);
   lv_obj_set_pos(tire_right_lbl, 280, 60);
 
-  // ========== Gaz bari (yesil) ==========
+  // ========== Throttle bar (green) ==========
   throttle_bar = lv_bar_create(scr1_cont);
   lv_obj_set_size(throttle_bar, 18, 120);
   lv_obj_set_pos(throttle_bar, 320, 100);
@@ -2006,7 +2006,7 @@ void Create_KOURacing_Dashboard(void) {
   lv_obj_set_style_text_font(throttle_pct_lbl, &lv_font_montserrat_16, 0);
   lv_obj_set_pos(throttle_pct_lbl, 310, 220);
 
-  // ========== Sag kolon: MODE + FAULT ==========
+  // ========== Right column: MODE + FAULT ==========
   mode_title_lbl = lv_label_create(scr1_cont);
   lv_label_set_text(mode_title_lbl, "MODE");
   lv_obj_set_style_text_color(mode_title_lbl, lv_color_hex(0x888888), 0);
@@ -2025,10 +2025,10 @@ void Create_KOURacing_Dashboard(void) {
   lv_obj_set_style_text_font(fault_label, &lv_font_montserrat_16, 0);
   lv_obj_set_pos(fault_label, 400, 96);
 
-  // ========== Alt satir: Mor TC LED'ler + READY ==========
+  // ========== Bottom row: Purple TC LEDs + READY ==========
   {
-    int d = 24, gap = 4; // Boyutu 30->24, boslugu 5->4 yaptik ki ortaya yer acilsin
-    // Sol 5 mor LED
+    int d = 24, gap = 4; // Reduced size and spacing to fit center status label
+    // Left 5 TC LEDs
     for (int i = 0; i < 5; i++) {
       tc_leds[i] = lv_obj_create(scr1_cont);
       lv_obj_remove_style_all(tc_leds[i]);
@@ -2039,7 +2039,7 @@ void Create_KOURacing_Dashboard(void) {
       lv_obj_set_pos(tc_leds[i], 15 + i * (d + gap), 244);
       lv_obj_add_flag(tc_leds[i], LV_OBJ_FLAG_HIDDEN);
     }
-    // Sag 4 mor LED
+    // Right 4 TC LEDs
     for (int i = 0; i < 4; i++) {
       tc_leds[5 + i] = lv_obj_create(scr1_cont);
       lv_obj_remove_style_all(tc_leds[5 + i]);
@@ -2059,8 +2059,8 @@ void Create_KOURacing_Dashboard(void) {
   lv_obj_set_style_text_font(ready_label, &lv_font_montserrat_28, 0);
   lv_obj_align(ready_label, LV_ALIGN_BOTTOM_MID, 0, -2);
 
-  // ========== BEYAZ DIKDORTGEN AYIRICILAR ==========
-  // Yardimci makro: beyaz ayirici dikdortgen olustur
+  // ========== WHITE RECTANGULAR DIVIDERS ==========
+  // Helper macro: create white rectangular divider
   #define CREATE_DIVIDER(parent, x, y, w, h) \
     do { \
       lv_obj_t *div = lv_obj_create(parent); \
@@ -2073,29 +2073,29 @@ void Create_KOURacing_Dashboard(void) {
       lv_obj_clear_flag(div, LV_OBJ_FLAG_SCROLLABLE); \
     } while(0)
 
-  // Yatay cizgi 1: Ust bilgi satiri alti
+  // Horizontal divider 1: below top status row
   CREATE_DIVIDER(scr1_cont, DIV_H1_X, DIV_H1_Y, DIV_H1_W, DIV_THICKNESS);
 
-  // Yatay cizgi 2: Alt TC LED satiri ustu
+  // Horizontal divider 2: above bottom TC LED row
   CREATE_DIVIDER(scr1_cont, DIV_H2_X, DIV_H2_Y, DIV_H2_W, DIV_THICKNESS);
 
-  // Dikey cizgi 1: Sol sicaklik kolonu sag kenari
+  // Vertical divider 1: left temperature column border
   CREATE_DIVIDER(scr1_cont, DIV_V1_X, DIV_V1_Y, DIV_THICKNESS, DIV_V1_H);
 
-  // Dikey cizgi 2: Fren bari | Hiz merkez
+  // Vertical divider 2: brake bar | center speed
   CREATE_DIVIDER(scr1_cont, DIV_V2_X, DIV_V2_Y, DIV_THICKNESS, DIV_V2_H);
 
-  // Dikey cizgi 3: Hiz merkez | Gaz bari
+  // Vertical divider 3: center speed | throttle bar
   CREATE_DIVIDER(scr1_cont, DIV_V3_X, DIV_V3_Y, DIV_THICKNESS, DIV_V3_H);
 
-  // Dikey cizgi 4: MODE/FAULT kolonu sol kenari
+  // Vertical divider 4: MODE/FAULT column border
   CREATE_DIVIDER(scr1_cont, DIV_V4_X, DIV_V4_Y, DIV_THICKNESS, DIV_V4_H);
 
   #undef CREATE_DIVIDER
 }
 
 // ================================================================
-// SCREEN 2 - DETAYLI BILGI (mavi butonla gecis)
+// SCREEN 2 - DETAILED TELEMETRY (toggled via user button)
 // ================================================================
 void Create_Screen2(void) {
   lv_obj_t *scr = lv_screen_active();
@@ -2138,7 +2138,7 @@ void Create_Screen2(void) {
 // REFRESH SCREEN 1
 // ================================================================
 void Refresh_Dashboard_UI(void) {
-  // RPM LED'ler
+  // RPM LEDs
   {
     int n = (myCar.rpm * RPM_LED_COUNT) / RPM_MAX_VALUE;
     if (n > RPM_LED_COUNT) n = RPM_LED_COUNT;
@@ -2153,26 +2153,26 @@ void Refresh_Dashboard_UI(void) {
   lv_label_set_text_fmt(rpm_label, "%d RPM", myCar.rpm);
   lv_label_set_text_fmt(tcs_label, "TCS %%%d", myCar.tcs_percent);
 
-  // Sicakliklar
+  // Temperatures
   lv_label_set_text_fmt(bat_temp_lbl, "BAT %d\xc2\xb0" "C", myCar.bat_temp);
   lv_label_set_text_fmt(inv_temp_lbl, "INV %d\xc2\xb0" "C", myCar.inv_temp);
   lv_label_set_text_fmt(mtr_temp_lbl, "MTR %d\xc2\xb0" "C", myCar.motor_temp);
   lv_label_set_text_fmt(oil_temp_lbl, "OIL %d\xc2\xb0" "C", myCar.oil_temp);
   lv_label_set_text_fmt(wtr_temp_lbl, "WTR %d\xc2\xb0" "C", myCar.wtr_temp);
 
-  // Lastik sicakliklari
+  // Tire temperatures
   lv_label_set_text_fmt(tire_left_lbl, "%d\n\xc2\xb0" "C", myCar.tire_temp_left);
   lv_label_set_text_fmt(tire_right_lbl, "%d\n\xc2\xb0" "C", myCar.tire_temp_right);
 
-  // Fren bari (kirmizi)
+  // Brake bar (red)
   lv_bar_set_value(brake_bar, (int32_t)(myCar.brake * 100), LV_ANIM_ON);
   lv_label_set_text_fmt(brake_pct_lbl, "%%%d", (int)(myCar.brake * 100));
 
-  // Gaz bari (yesil)
+  // Throttle bar (green)
   lv_bar_set_value(throttle_bar, (int32_t)(myCar.throttle * 100), LV_ANIM_ON);
   lv_label_set_text_fmt(throttle_pct_lbl, "%%%d", (int)(myCar.throttle * 100));
 
-  // Hiz
+  // Speed
   lv_label_set_text_fmt(speed_label, "%d", myCar.speed);
 
   // Lap timer (mm.ss.mmm)
@@ -2183,14 +2183,14 @@ void Refresh_Dashboard_UI(void) {
     lv_label_set_text_fmt(laptime_lbl, "0%d.%02d.%03d", min, sec, ms);
   }
 
-  // Batarya % ve Guc
+  // Battery % and Power
   lv_label_set_text_fmt(bat_pct_lbl, "BAT %%%d", myCar.bat_percent);
   lv_label_set_text_fmt(power_lbl, "%dW", myCar.power_watts);
 
   // Mode
   lv_label_set_text_fmt(mode_value_lbl, "%s", myCar.mode);
 
-  // Mor TC LED'ler (alt kisim)
+  // Purple TC LEDs (bottom row)
   for (int i = 0; i < TC_LED_COUNT; i++) {
     if (myCar.traction_control)
       lv_obj_clear_flag(tc_leds[i], LV_OBJ_FLAG_HIDDEN);
@@ -2198,7 +2198,7 @@ void Refresh_Dashboard_UI(void) {
       lv_obj_add_flag(tc_leds[i], LV_OBJ_FLAG_HIDDEN);
   }
 
-  // Ready durumu
+  // Ready status
   if (myCar.ready) {
     lv_label_set_text(ready_label, "READY");
     lv_obj_set_style_text_color(ready_label, lv_color_hex(0x00FF88), 0);
@@ -2212,7 +2212,7 @@ void Refresh_Dashboard_UI(void) {
 // REFRESH SCREEN 2 - placeholder
 // ================================================================
 void Refresh_Screen2_UI(void) {
-  // Ileride dinamik degerler eklenecek
+  // Dynamic values can be updated here
 }
 
 /* USER CODE END 4 */
@@ -2232,20 +2232,20 @@ void StartDefaultTask(void const *argument) {
   MX_LWIP_Init();
   /* USER CODE BEGIN 5 */
 
-  // --- 1. EKRAN VE ARAYUZ ---
+  // --- 1. DISPLAY AND UI INITIALIZATION ---
   lv_init();
   lv_port_disp_init();
-  Show_Splash_Screen();  // 3 saniye acilis ekrani
+  Show_Splash_Screen();  // 3-second splash screen
   Create_KOURacing_Dashboard();
   Create_Screen2();
 
-  // --- 2. UDP SUNUCU BASLAT ---
+  // --- 2. START UDP SERVER ---
   UDP_Server_Init();
 
-  // --- 3. RASTGELE SAYI TOHUMLAMA ---
-  srand(HAL_GetTick());  // Splash screen sonrasi ~3000ms tick = her resette farkli seed
+  // --- 3. PSEUDO-RANDOM SEED INITIALIZATION ---
+  srand(HAL_GetTick());  // Seed PRNG using boot timing jitter after splash screen
 
-  // Varsayilan degerler
+  // Default values
   myCar.vehicle_state = "Ready";
   myCar.inverter_status = "Ready";
   myCar.battery_status = "Normal";
@@ -2255,14 +2255,14 @@ void StartDefaultTask(void const *argument) {
 
   /* Infinite loop */
   for (;;) {
-    // LVGL ekran guncelleme
+    // Update LVGL timer handlers
     lv_timer_handler();
 
-    // Mavi buton (PI11) ile ekran gecisi - debounce
+    // Screen toggle via user button (PI11) with software debounce
     {
       uint8_t btn_now = HAL_GPIO_ReadPin(GPIOI, GPIO_PIN_11);
       if (btn_now == GPIO_PIN_SET && btn_prev == GPIO_PIN_RESET) {
-        // Buton basildi (rising edge)
+        // Rising edge detected
         current_screen = !current_screen;
         if (current_screen) {
           lv_obj_add_flag(scr1_cont, LV_OBJ_FLAG_HIDDEN);
@@ -2275,17 +2275,17 @@ void StartDefaultTask(void const *argument) {
       btn_prev = btn_now;
     }
 
-    // Telemetri verisi uret
+    // Generate telemetry updates
     Update_Telemetry();
 
-    // Aktif ekrani guncelle
+    // Refresh active screen
     if (current_screen == 0) {
       Refresh_Dashboard_UI();
     } else {
       Refresh_Screen2_UI();
     }
 
-    // JSON olustur ve UDP ile gonder (Raspberry Pi'ye)
+    // Format JSON payload and transmit via UDP
     sprintf(json_buffer,
             "{\"rpm\":%d,\"speed\":%d,\"motor_temp\":%d,"
             "\"battery_voltage\":%.1f,\"throttle\":%.2f,\"brake\":%.2f,"
@@ -2307,7 +2307,7 @@ void StartDefaultTask(void const *argument) {
 
     Send_Telemetry_UDP(json_buffer);
 
-    // RTOS uyumlu bekleme (100ms = 10 Hz)
+    // Periodic delay (100ms = 10 Hz)
     osDelay(100);
   }
   /* USER CODE END 5 */
@@ -2355,7 +2355,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-  lv_tick_inc(1); // LVGL tick her 1ms'de bir (TIM6 = 1kHz)
+  lv_tick_inc(1); // 1ms tick increment for LVGL timebase
   /* USER CODE END Callback 1 */
 }
 
@@ -2366,11 +2366,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 void Error_Handler(void) {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-  // LCD Backlight'Ãƒâ€Ã‚Â± yakÃƒâ€Ã‚Â±p sÃƒÆ’Ã‚Â¶ndÃƒÆ’Ã‚Â¼rerek hata olduÃƒâ€Ã…Â¸unu gÃƒÆ’Ã‚Â¶ster
+  // Toggle LCD backlight to indicate error state
   while (1) {
     HAL_GPIO_TogglePin(LCD_BL_CTRL_GPIO_Port, LCD_BL_CTRL_Pin);
     for (volatile uint32_t i = 0; i < 2000000; i++)
-      ; // Basit gecikme
+      ; // Busy-wait delay
   }
   /* USER CODE END Error_Handler_Debug */
 }
