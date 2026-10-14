@@ -2,13 +2,13 @@
 
 [🇬🇧 English](README.md) | [🇹🇷 Türkçe](README.tr.md)
 
-Formula Student Electric yarış aracı için geliştirilmiş gerçek zamanlı telemetri ve veri toplama sistemi. Sistem; araç içi dijital gösterge paneli (STM32), Ethernet tabanlı ağ geçidi (Raspberry Pi) ve pit alanı izleme uygulamasından (Android) oluşur.
+Formula Student Electric yarış aracı için geliştirilmiş gerçek zamanlı telemetri ve veri toplama sistemi. Sistem mimarisi üç ana alt bileşenden oluşur: araç içi dijital gösterge paneli (STM32), Ethernet tabanlı telemetri ağ geçidi (Raspberry Pi) ve pit alanı izleme uygulaması (Android).
 
 ---
 
 ## Mimari Genel Bakış
 
-Sistem veri akışı üç ana katmandan meydana gelir:
+Uçtan uca veri akışı birbirine bağlı üç katman üzerinden yürütülür:
 
 ```mermaid
 flowchart LR
@@ -38,34 +38,34 @@ flowchart LR
 ### 1. Araç Kokpit Yazılımı (`Telemetry/`)
 * **Hedef Donanım:** STM32F746G-DISCO (ARM Cortex-M7 @ 216 MHz, 1 MB Flash, 320 KB SRAM, 64 Mbit harici SDRAM).
 * **Ekran ve Grafik:**
-  * 4.3 inç 480x272 LCD ekran, LTDC birimi üzerinden doğrudan `0xC0000000` SDRAM taban adresindeki 16-bit RGB565 tamponuyla sürülür.
-  * Grafik arayüzü LVGL 9 kütüphanesi ile doğrudan çizim tamponu (draw buffer) kullanılarak çizilir.
-  * FMC SDRAM başlatma dizisi 100 MHz bellek saat hızı ve CAS latency 3 değerine göre yapılandırılmıştır.
+  * 4.3 inç 480x272 LCD ekran, LTDC birimi üzerinden `0xC0000000` SDRAM taban adresindeki 16-bit RGB565 bellek tamponuyla sürülür.
+  * Grafik arayüzü, LVGL 9 kütüphanesi ve doğrudan bellek tamponu (direct framebuffer flush) yöntemiyle işlenir.
+  * FMC SDRAM arayüzü 100 MHz bellek saat frekansı ve CAS latency 3 değerine göre yapılandırılmıştır.
 * **İşletim Sistemi ve Ağ:**
-  * FreeRTOS çekirdeği arayüz çizimi ve ağ paket gönderim görevlerini yönetir.
-  * LwIP TCP/IP yığını RMII Ethernet PHY üzerinde statik IP (`192.168.1.10`) ile çalışır.
-  * Telemetri verileri saniyede 10 kez (10 Hz) UDP port 5000 üzerinden yayınlanır.
+  * FreeRTOS çekirdeği arayüz çizimi ve telemetri paket iletim görevlerini yönetir.
+  * LwIP TCP/IP yığını, RMII Ethernet PHY üzerinde statik IP (`192.168.1.10`) ile çalışır.
+  * Telemetri verileri 10 Hz frekansla UDP port 5000 üzerinden yayınlanır.
 * **Sürücü Arayüzü:**
-  * Çift ekran desteği: Ana kokpit ekranı (RPM LED göstergeleri, çekiş kontrol bildirimleri, hız, sıcaklıklar, batarya durumu) ve detaylı tanılama ekranı. Ekran geçişi kart üzerindeki mavi kullanıcı butonu (PI11) ile yapılır.
+  * Çift ekran mimarisi: Birincil kokpit ekranı (RPM LED göstergeleri, çekiş kontrol bildirimleri, hız, sıcaklıklar, batarya durumu) ve ikincil tanılama ekranı. Ekranlar arası geçiş, kart üzerindeki kullanıcı butonu (PI11) ile gerçekleştirilir.
 
 ### 2. Pit Alanı Android Uygulaması (`TelemetryAndroid/`)
 * **Platform:** Yerel Android (Kotlin, Min SDK 24, Target SDK 34).
-* **Ağ Katmanı:** OkHttp WebSocket kütüphanesi iki farklı bağlantı modunu destekler:
-  * **Yerel Ağ Modu:** Pit alanındaki Wi-Fi üzerinden doğrudan bağlantı (`ws://<GATEWAY_IP>:3005`).
-  * **Tünel Modu:** Hücresel LTE şebekesi üzerinden Cloudflare Zero Trust tünel uç noktasına uzaktan bağlantı (`wss://...`).
-* **Kimlik Doğrulama:** Veri akışı başlamadan önce soket üzerinden takım şifresi doğrulama el sıkışması yapılır.
-* **Veri Ayrıştırıcı:** Ağ geçidinden gelen 28 baytlık little-endian IEEE-754 ikili paketleri doğrudan telemetri nesnelerine dönüştürür.
+* **Ağ Katmanı:** OkHttp WebSocket istemcisi iki çalışma modunu destekler:
+  * **Yerel Ağ Modu:** Pit alanındaki yerel Wi-Fi ağı üzerinden doğrudan bağlantı (`ws://<GATEWAY_IP>:3005`).
+  * **Tünel Modu:** Hücresel LTE ağı üzerinden Cloudflare Zero Trust tünel uç noktasına uzaktan bağlantı (`wss://...`).
+* **Kimlik Doğrulama:** Veri iletimi başlamadan önce soket üzerinden takım belirteci (token) el sıkışması gerçekleştirilir.
+* **Veri Ayrıştırıcı:** Ağ geçidinden iletilen 28 baytlık little-endian IEEE-754 ikili paketleri doğrudan yapılandırılmış telemetri durum modellerine dönüştürür.
 
 ### 3. Ağ Geçidi ve Yardımcı Araçlar
-* **`rpi_gateway_auth.js`:** Raspberry Pi üzerinde çalışan, takım şifresini denetleyen ve doğrulanmamış bağlantıları zaman aşımına uğratan Node.js WebSocket ara yazılımı.
-* **`udp_test_sender.py`:** Fiziksel donanım bağlı değilken yazılımı ve mobil uygulamayı test etmek için UDP soketine simüle Formula Student telemetri verisi gönderen Python betiği.
+* **`rpi_gateway_auth.js`:** Raspberry Pi üzerinde çalışan, takım kimlik bilgilerini doğrulayan ve doğrulanmamış bağlantıları zaman aşımıyla sonlandıran Node.js WebSocket ara yazılımı.
+* **`udp_test_sender.py`:** Fiziksel donanım olmaksızın gömülü yazılım ve mobil uygulamayı doğrulamak üzere UDP üzerinden yapay Formula Student telemetri akışı üreten Python test aracı.
 
 ---
 
 ## Telemetri Paket Biçimi
 
 ### UDP Paketi (STM32 -> Ağ Geçidi)
-STM32, UDP port 5000 üzerinden 10 Hz frekansla JSON formatında veri yayınlar:
+STM32 mikrodenetleyicisi, telemetri verilerini UDP port 5000 üzerinden 10 Hz frekansla JSON formatında yayınlar:
 
 ```json
 {
@@ -93,11 +93,11 @@ STM32, UDP port 5000 üzerinden 10 Hz frekansla JSON formatında veri yayınlar:
 ```
 
 ### İkili WebSocket Çerçevesi (Ağ Geçidi -> Android)
-Mobil istemciye iletilen yüksek frekanslı paketler 28 baytlık little-endian ikili tampon olarak iletilir:
+Mobil istemciye aktarılan yüksek frekanslı telemetri paketleri 28 baytlık little-endian ikili tampon olarak iletilir:
 
 | Konum (Bayt) | Alan | Veri Tipi | Ölçek / Aralık |
 |---|---|---|---|
-| `0 - 3` | Paket Sıra No | uint32_t | Artan sayaç değeri |
+| `0 - 3` | Paket Sıra No | uint32_t | Monotonik sayaç değeri |
 | `4 - 7` | Motor Devri (RPM) | float (IEEE-754) | 0 - 10000 RPM |
 | `8 - 11` | Araç Hızı | float (IEEE-754) | 0 - 150 km/h |
 | `12 - 15` | Motor Sıcaklığı | float (IEEE-754) | °C |
@@ -134,16 +134,16 @@ Mobil istemciye iletilen yüksek frekanslı paketler 28 baytlık little-endian i
 ## Kurulum ve Çalıştırma Kılavuzu
 
 ### Gömülü Yazılım (STM32)
-1. **STM32CubeIDE** uygulamasını açın ve `Telemetry/` klasörünü mevcut proje olarak içeri aktarın.
-2. GCC derleyici ayarlarının ARM Cortex-M7 donanımsal kayan nokta birimine (`-mfpu=fpv5-sp-d16 -mfloat-abi=hard`) ayarlandığından emin olun.
-3. STM32F746G-DISCO kartını ST-LINK USB portu (CN14) üzerinden bilgisayara bağlayın.
-4. Projeyi derleyin (`Project -> Build Project`) ve ST-LINK hata ayıklayıcısı ile karta yükleyin.
+1. **STM32CubeIDE** uygulamasını açın ve `Telemetry/` klasörünü mevcut proje olarak çalışma alanına aktarın.
+2. GCC derleyici yapılandırmasında ARM Cortex-M7 donanımsal kayan nokta desteğinin (`-mfpu=fpv5-sp-d16 -mfloat-abi=hard`) etkin olduğunu doğrulayın.
+3. STM32F746G-DISCO kartını ST-LINK USB portu (CN14) üzerinden geliştirme bilgisayarına bağlayın.
+4. Hedefi derleyin (`Project -> Build Project`) ve ST-LINK hata ayıklama yapılandırmasıyla mikrodenetleyiciye yükleyin.
 
 ### Mobil Uygulama (Android)
-1. **Android Studio** uygulamasını açın ve `TelemetryAndroid/` dizinini seçin.
-2. Gradle bağımlılıklarının (OkHttp, AndroidX, Material3) eşitlenmesini bekleyin.
-3. Bir Android cihaz bağlayın veya ağ erişimi olan bir emülatör başlatın.
-4. `:app` konfigürasyonunu çalıştırın.
+1. **Android Studio** uygulamasında `TelemetryAndroid/` dizinini açın.
+2. Gradle bağımlılık senkronizasyonunun (OkHttp, AndroidX, Material3) tamamlanmasını bekleyin.
+3. Bir Android hedef cihaz bağlayın veya ağ erişimi etkin bir emülatör başlatın.
+4. `:app` çalıştırma yapılandırmasını yürütün.
 
 ### Telemetri Simülatörü
 Sistemi fiziksel araç veya sensörler olmadan test etmek için:
@@ -155,4 +155,4 @@ python udp_test_sender.py
 
 ## Lisans
 
-Bu proje MIT Lisansı kapsamında lisanslanmıştır. Ayrıntılar için [LICENSE](LICENSE) dosyasına bakabilirsiniz.
+Bu proje MIT Lisansı kapsamında sunulmaktadır. Ayrıntılar için [LICENSE](LICENSE) belgesine bakınız.

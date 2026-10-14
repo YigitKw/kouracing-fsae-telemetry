@@ -2,13 +2,13 @@
 
 [🇬🇧 English](README.md) | [🇹🇷 Türkçe](README.tr.md)
 
-Real-time telemetry and data acquisition system designed for the Formula Student Electric racing vehicle. The system integrates an on-vehicle digital instrument cluster (STM32), an Ethernet-based gateway (Raspberry Pi), and a trackside monitoring application (Android).
+Real-time telemetry and data acquisition system developed for a Formula Student Electric racing vehicle. The architecture comprises three principal subsystems: an on-vehicle digital instrument cluster (STM32), an Ethernet telemetry gateway (Raspberry Pi), and a trackside monitoring application (Android).
 
 ---
 
 ## Architecture Overview
 
-The system pipeline consists of three interconnected layers:
+The end-to-end data pipeline operates across three interconnected layers:
 
 ```mermaid
 flowchart LR
@@ -39,14 +39,14 @@ flowchart LR
 * **Target Hardware:** STM32F746G-DISCO (ARM Cortex-M7 @ 216 MHz, 1 MB Flash, 320 KB SRAM, 64 Mbit external SDRAM).
 * **Display Pipeline:**
   * 4.3" 480x272 LCD driven via LTDC (Layer 0, 16-bit RGB565 format at `0xC0000000` framebuffer base).
-  * LVGL 9 graphics library utilizing direct framebuffer flush.
-  * FMC SDRAM initialization sequence configured with 100 MHz memory clock (CAS latency 3).
-* **RTOS & Networking:**
-  * FreeRTOS real-time kernel managing UI rendering and network dispatch tasks.
-  * LwIP TCP/IP stack running on RMII Ethernet PHY with static IP configuration (`192.168.1.10`).
-  * Telemetry frames dispatched at 10 Hz over UDP port 5000.
+  * LVGL 9 graphics library configured for direct framebuffer flushing.
+  * FMC SDRAM interface clocked at 100 MHz with CAS latency 3.
+* **Operating System and Networking:**
+  * FreeRTOS kernel manages UI rendering and telemetry dispatch tasks.
+  * LwIP TCP/IP stack operates over an RMII Ethernet PHY with static IP `192.168.1.10`.
+  * Telemetry frames dispatched at 10 Hz via UDP port 5000.
 * **Driver Interface:**
-  * Dual-screen support: Primary cockpit dashboard (RPM LEDs, traction control indicators, speed, temperatures, battery status) and secondary detailed diagnostics screen toggled via onboard user button (PI11).
+  * Dual-screen support: Primary cockpit dashboard (RPM LED bar, traction control indicators, speed, temperatures, battery status) and secondary detailed diagnostics screen toggled via onboard user button (PI11).
 
 ### 2. Trackside Android Application (`TelemetryAndroid/`)
 * **Platform:** Native Android (Kotlin, Min SDK 24, Target SDK 34).
@@ -54,18 +54,18 @@ flowchart LR
   * **Local Network Mode:** Direct connection (`ws://<GATEWAY_IP>:3005`) for pit-lane Wi-Fi monitoring.
   * **Tunnel Mode:** Remote connection over cellular LTE via Cloudflare Zero Trust Tunnel endpoint (`wss://...`).
 * **Authentication:** Team token challenge handshake on connection establishment prior to streaming packet reception.
-* **Telemetry Decoder:** Binary packet unpacker parsing 28-byte little-endian IEEE-754 payload buffers directly into structured telemetry states.
+* **Telemetry Decoder:** Parses 28-byte little-endian IEEE-754 payload buffers directly into structured telemetry state models.
 
-### 3. Gateway & Tools
-* **`rpi_gateway_auth.js`:** Node.js WebSocket authentication middleware handling team credential verification and unauthenticated client timeouts.
-* **`udp_test_sender.py`:** Python testing utility that generates synthetic Formula Student telemetry feeds over UDP socket for standalone firmware/app verification without physical hardware.
+### 3. Gateway and Utilities
+* **`rpi_gateway_auth.js`:** Node.js WebSocket authentication middleware that verifies team credentials and terminates unauthenticated client sessions.
+* **`udp_test_sender.py`:** Python utility that generates synthetic Formula Student telemetry streams over UDP to verify firmware and mobile software independently of vehicle hardware.
 
 ---
 
 ## Telemetry Packet Specification
 
 ### UDP Datagram (STM32 -> Gateway)
-STM32 broadcasts JSON-encoded packets over UDP port 5000 at 10 Hz:
+The STM32 firmware broadcasts JSON datagrams to the gateway over UDP port 5000 at 10 Hz:
 
 ```json
 {
@@ -93,7 +93,7 @@ STM32 broadcasts JSON-encoded packets over UDP port 5000 at 10 Hz:
 ```
 
 ### Binary WebSocket Frame (Gateway -> Android)
-High-frequency binary payloads streamed to mobile clients are packed in 28-byte little-endian buffers:
+Binary payloads streamed to the Android client are serialized into 28-byte little-endian buffers:
 
 | Offset (Bytes) | Field | Type | Scale / Range |
 |---|---|---|---|
@@ -134,18 +134,18 @@ High-frequency binary payloads streamed to mobile clients are packed in 28-byte 
 
 ### Firmware (STM32)
 1. Open **STM32CubeIDE** and import `Telemetry/` as an Existing Project into Workspace.
-2. Ensure GCC toolchain is configured for ARM Cortex-M7 with hardware FPU (`-mfpu=fpv5-sp-d16 -mfloat-abi=hard`).
-3. Connect the STM32F746G-DISCO board via ST-LINK USB port (CN14).
+2. Verify GCC compiler settings for ARM Cortex-M7 with hardware floating-point support (`-mfpu=fpv5-sp-d16 -mfloat-abi=hard`).
+3. Connect the STM32F746G-DISCO board via the ST-LINK USB interface (CN14).
 4. Build the target (`Project -> Build Project`) and flash via standard ST-LINK debugger configuration.
 
 ### Android Application
-1. Open **Android Studio** and open the `TelemetryAndroid/` directory.
-2. Let Gradle sync project dependencies (OkHttp, AndroidX, Material3).
-3. Connect an Android device or launch an emulator with Network Access enabled.
+1. Open **Android Studio** and import the `TelemetryAndroid/` directory.
+2. Allow Gradle to synchronize project dependencies (OkHttp, AndroidX, Material3).
+3. Connect an Android target device or launch an emulator with network access enabled.
 4. Run the `:app` configuration.
 
 ### Telemetry Simulator
-To test the cluster and mobile client without vehicle sensor inputs:
+To test the instrument cluster and mobile application without physical vehicle sensors:
 ```bash
 python udp_test_sender.py
 ```
