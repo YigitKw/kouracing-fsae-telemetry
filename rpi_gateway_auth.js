@@ -8,9 +8,13 @@ function handleAuthConnection(wss, ws) {
     let authenticated = false;
 
     const authTimeout = setTimeout(() => {
-        if (!authenticated) {
-            ws.send("auth_error:timeout");
-            ws.close();
+        if (!authenticated && ws.readyState === 1) {
+            try {
+                ws.send("auth_error:timeout");
+                ws.close();
+            } catch (err) {
+                console.error("[AUTH] Error closing timed out socket:", err);
+            }
         }
     }, 10000);
 
@@ -24,12 +28,20 @@ function handleAuthConnection(wss, ws) {
             if (text === TEAM_PASSWORD) {
                 authenticated = true;
                 clearTimeout(authTimeout);
-                ws.send("auth_success");
+                if (ws.readyState === 1) {
+                    ws.send("auth_success");
+                }
                 console.log("[AUTH] Client authenticated");
             } else {
                 console.log("[AUTH] Invalid credentials");
-                ws.send("auth_error:wrong_password");
-                ws.close();
+                if (ws.readyState === 1) {
+                    try {
+                        ws.send("auth_error:wrong_password");
+                        ws.close();
+                    } catch (err) {
+                        console.error("[AUTH] Error rejecting client:", err);
+                    }
+                }
             }
         }
     });

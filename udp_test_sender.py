@@ -3,12 +3,13 @@ import json
 import time
 import math
 import random
+import sys
 
-STM32_IP = "192.168.1.10"
-STM32_PORT = 5000
+TARGET_IP = sys.argv[1] if len(sys.argv) > 1 and not sys.argv[1].startswith("-") else "127.0.0.1"
+TARGET_PORT = int(sys.argv[2]) if len(sys.argv) > 2 else 5000
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-print(f"[UDP] Streaming to {STM32_IP}:{STM32_PORT}")
+print(f"[UDP] Streaming to {TARGET_IP}:{TARGET_PORT} (Usage: python udp_test_sender.py [TARGET_IP] [PORT])")
 
 t = 0
 try:
@@ -32,7 +33,7 @@ try:
             "state": state,
             "fault": fault
         })
-        sock.sendto(payload.encode(), (STM32_IP, STM32_PORT))
+        sock.sendto(payload.encode(), (TARGET_IP, TARGET_PORT))
         
         print(f"\r[>] RPM:{rpm:5d} | SPD:{speed:3d}km/h | TEMP:{temp}°C | BAT:{volt}V | THR:{throttle:.0%} | {state}", end="")
         t += 0.1
