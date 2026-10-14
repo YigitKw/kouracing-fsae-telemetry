@@ -1,6 +1,6 @@
 # KOU Racing - FSAE Telemetri Sistemi
 
-[English Documentation](README.md)
+[🇬🇧 English](README.md) | [🇹🇷 Türkçe](README.tr.md)
 
 Formula Student Electric yarış aracı için geliştirilmiş gerçek zamanlı telemetri ve veri toplama sistemi. Sistem; araç içi dijital gösterge paneli (STM32), Ethernet tabanlı ağ geçidi (Raspberry Pi) ve pit alanı izleme uygulamasından (Android) oluşur.
 
